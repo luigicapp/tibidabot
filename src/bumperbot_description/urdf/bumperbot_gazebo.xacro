@@ -51,6 +51,11 @@
       </plugin>
       <plugin filename="ignition-gazebo-imu-system" name="ignition::gazebo::systems::Imu">
       </plugin>
+
+      <!--Lidar plugin-->
+      <plugin filename="ignition-gazebo-sensors-system" name="ignition::gazebo::systems::Sensors">
+        <render_engine>ogre2</render_engine><!--we can set a parameter of the lidar plugin-->
+      </plugin>
     </xacro:if>
 
     <!-- ROS 2 Iron or above -->
@@ -59,6 +64,11 @@
         <parameters>$(find bumperbot_controller)/config/bumperbot_controllers.yaml</parameters>
       </plugin>
       <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu">
+      </plugin>
+      
+      <!--Lidar plugin-->
+      <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+        <render_engine>ogre2</render_engine>
       </plugin>
     </xacro:unless>
   </gazebo>
@@ -114,5 +124,37 @@
         </imu>
     </sensor>
   </gazebo>
+
+  <gazebo reference="laser_link">
+    <sensor name ="laser" type="gpu_lidar"><!--will use gpu to simulate rays-->
+      <!--let's set the param of the sensor for the plugin-->
+      <always_on>true</always_on>
+      <visualize>true</visualize>
+      <topic>scan</topic>
+      <update_rate>5</update_rate>
+      <gz_frame_id>laser_link</gz_frame_id>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>360</samples>
+            <resolution>1.0</resolution>
+            <min_angle>0.0</min_angle>
+            <max_angle>6.28</max_angle><!--360°-->
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.12</min><!--meters-->
+          <max>12.0</max><!--meters-->
+          <resolution>0.02</resolution>
+        </range>
+        <noise><!--noise of the sensor-->
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </ray>
+    </sensor>
+  </gazebo>
+
 
 </robot>

@@ -68,7 +68,9 @@ def generate_launch_description():
         executable="parameter_bridge",
         arguments=[
             "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
-            "/imu@sensor_msgs/msg/Imu[gz.msgs.IMU"
+            "/imu@sensor_msgs/msg/Imu[gz.msgs.IMU", #needed to allow communication between gazebo and ros2 (act as bridge)
+            "/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan" #needed to allow communication between gazebo and ros2
+                                                                #the istrction have this form "topic@typeOfRosMsg[typeOfGazeboMsg"
         ],
         remappings=[
             ('/imu', '/imu/out'),
