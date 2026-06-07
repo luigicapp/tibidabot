@@ -1,1 +1,11 @@
-{ "configurations": [ { "name": "Linux", "includePath": [ "${workspaceFolder}/**", "/opt/ros/jazzy/include/**", "${workspaceFolder}/install/**" ], "defines": [], "compilerPath": "/usr/bin/gcc", "cStandard": "c17", "cppStandard": "c++17", "intelliSenseMode": "linux-gcc-x64", "compileCommands": "${workspaceFolder}/build/compile_commands.json" } ], "version": 4 }
+{ "configurations": [ 
+    { "name": "Linux", "includePath": [ "${workspaceFolder}/**", 
+    "/opt/ros/jazzy/include/**", 
+    "${workspaceFolder}/install/**" ], 
+    "defines": [], 
+    "compilerPath": "/usr/bin/gcc",
+     "cStandard": "c17", 
+     "cppStandard": "c++17", 
+     "intelliSenseMode": "linux-gcc-x64",
+      "compileCommands": "${workspaceFolder}/build/compile_commands.json" } ],
+       "version": 4 }
