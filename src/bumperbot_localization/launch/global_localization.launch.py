@@ -21,7 +21,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time")  #read the param at runtime
 
     map_path = PathJoinSubstitution([
-        get_package_share_directory('bumperbot_mapping'), #get the path of the package
+        get_package_share_directory("bumperbot_mapping"), #get the path of the package
         "maps", #we want to access the maps folder in the package
         map_name, #in the maps folder we have different maps, we want to access the one specified by the map_name argument
         "map.yaml" #the map file is called map.yaml
@@ -39,7 +39,7 @@ def generate_launch_description():
     #take a list of all the nodes in the package and add them to the launch description
     #(the so called "actions" in ROS2) and return it
     return LaunchDescription([
-        use_sim_time_arg,
         map_name_arg,
+        use_sim_time_arg,
         nav2_map_server_node
     ])
