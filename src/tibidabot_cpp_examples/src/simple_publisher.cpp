@@ -12,8 +12,7 @@ class SimplePublisher : public rclcpp::Node
     :   Node("simple_publisher"), counter_(0)
     {
         pub_ = create_publisher<std_msgs::msg::String>("chatter", 10);
-        timer_ = create_timer(2s, std::bind(&SimplePublisher::timerCallback,this));
-    
+        timer_ = create_wall_timer(2s, std::bind(&SimplePublisher::timerCallback,this));
         RCLCPP_INFO(get_logger(),"publishing at 1 Hz");
     }
 

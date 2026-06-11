@@ -3,7 +3,7 @@
 #include <std_msgs/msg/string.hpp>
 
 using namespace std::chrono_literals;
-using namespace std::placeholders::_1;
+using std::placeholders::_1;
 
 class SimpleLifecycleNode : public rclcpp_lifecycle::LifecycleNode
 {
@@ -71,7 +71,7 @@ int main(int argc, char ** argv)
 {
     rclcpp::init(argc, argv);
     rclcpp::executors::SingleThreadedExecutor executor;
-    std::shared_ptr<SimpleLifecycleNode> node = std::make_shared<SimpleLifecycleNode>("simple_lifecycle_node");s
+    std::shared_ptr<SimpleLifecycleNode> node = std::make_shared<SimpleLifecycleNode>("simple_lifecycle_node");
     executor.add_node(node->get_node_base_interface());
     executor.spin();
     return 0;
