@@ -12,6 +12,7 @@ find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(bumperbot_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 
 add_executable(simple_publisher src/simple_publisher.cpp)
 ament_target_dependencies(simple_publisher rclcpp std_msgs)
@@ -19,6 +20,8 @@ ament_target_dependencies(simple_publisher rclcpp std_msgs)
 add_executable(simple_subscriber src/simple_subscriber.cpp)
 ament_target_dependencies(simple_subscriber rclcpp std_msgs)
 
+add_executable(simple_lifecycle_node src/simple_lifecycle_node.cpp)
+ament_target_dependencies(simple_lifecycle_node rclcpp rclcpp_lifecycle std_msgs)
 
 #block of instruction to compile action server
 add_library(simple_action_server SHARED src/simple_action_server.cpp)
@@ -61,6 +64,7 @@ rclcpp_components_register_node(simple_action_client
 install(TARGETS
       simple_publisher
       simple_subscriber
+      simple_lifecycle_node
       DESTINATION 
       lib/${PROJECT_NAME})     
 

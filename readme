@@ -1,0 +1,5 @@
+install these dependencies
+
+sudo apt install ros-humble-hardware-interface
+sudo apt install ros-humble-twist-mux-msgs
+sudo apt install -y libserial-dev

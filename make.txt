@@ -1,0 +1,24 @@
+Starting >>> bumperbot_msgs
+Starting >>> bumperbot_bringup
+Starting >>> bumperbot_controller
+Starting >>> bumperbot_description
+Starting >>> bumperbot_firmware
+Starting >>> bumperbot_localization
+Starting >>> bumperbot_utils
+Finished <<< bumperbot_bringup [0.12s]
+Finished <<< bumperbot_description [0.14s]
+Finished <<< bumperbot_utils [0.16s]
+Finished <<< bumperbot_msgs [0.47s]
+Starting >>> bumperbot_cpp_examples
+Starting >>> bumperbot_py_examples
+Starting >>> tibidabot_cpp_examples
+Finished <<< bumperbot_localization [0.50s]
+Finished <<< bumperbot_controller [0.52s]
+Aborted  <<< bumperbot_cpp_examples [0.07s]
+Aborted  <<< bumperbot_py_examples [0.06s]
+Aborted  <<< tibidabot_cpp_examples [0.06s]
+
+Summary: 6 packages finished [0.81s]
+  1 package failed: bumperbot_firmware
+  3 packages aborted: bumperbot_cpp_examples bumperbot_py_examples tibidabot_cpp_examples
+  1 package had stderr output: bumperbot_firmware
