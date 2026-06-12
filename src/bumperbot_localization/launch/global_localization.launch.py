@@ -36,10 +36,32 @@ def generate_launch_description():
             {"use_sim_time": use_sim_time} #use sim time if the argument is set to true
         ]
     )
+
+    lifecycle_nodes = ["map_server"] #the lifecycle manager will manage these nodes, in this case only the map server node but we can add other nodes if we want to
+
+    #the lifecycle manager will automatically transition the nodes 
+    #to the active state when they are launched, it will also manage the 
+    #lifecycle of the nodes (e.g. if a node crashes it will try to restart it)
+    #(needed because it would be unconfortable to have to manually transition the nodes 
+    #to the active state every time we launch the localization stack, especially if we have 
+    #multiple nodes to manage)
+    nav2_lifecycle_manager = Node(
+        package="nav2_lifecycle_manager",
+        executable="lifecycle_manager",
+        name = "lifecycle_manager_localization",
+        output="screen",
+        parameters=[
+            {"node_names": lifecycle_nodes}, #the lifecycle manager will manage the nodes specified in the lifecycle_nodes list
+            {"use_sim_time": use_sim_time}, #use sim time if the argument is set to true
+            {"autostart": True} #the lifecycle manager will automatically transition the nodes to the active state when they are launched   
+        ]
+    )
+
     #take a list of all the nodes in the package and add them to the launch description
     #(the so called "actions" in ROS2) and return it
     return LaunchDescription([
         map_name_arg,
         use_sim_time_arg,
-        nav2_map_server_node
+        nav2_map_server_node,
+        nav2_lifecycle_manager
     ])
