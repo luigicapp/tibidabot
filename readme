@@ -2,7 +2,52 @@ install these dependencies
 
 sudo apt install ros-humble-hardware-interface
 sudo apt install ros-humble-twist-mux-msgs
+apt install -y ros-humble-twist-mux
 sudo apt install -y libserial-dev
-
+apt install -y \
+  ros-humble-controller-manager \
+  ros-humble-ros2-control \
+  ros-humble-ros2-controllers \
+  ros-humble-joint-state-broadcaster \
+  ros-humble-joint-trajectory-controller \
+  ros-humble-joy-teleop
 sudo apt install ros-huble-nav2*
 
+1) RESET OBBLIGATORIO (prima cosa da fare sempre)
+
+Se hai build rotte:
+
+cd /tibidabot
+rm -rf build install log
+
+
+2) PACCHETTI ROS GZ (Gazebo Sim + bridge)
+apt update
+apt install -y \
+  ros-humble-ros-gz-sim \
+  ros-humble-ros-gz-bridge
+
+
+3) ROS2 CONTROL STACK
+apt install -y \
+  ros-humble-controller-manager \
+  ros-humble-ros2-control \
+  ros-humble-ros2-controllers \
+  ros-humble-joint-state-broadcaster \
+  ros-humble-joint-trajectory-controller \
+  ros-humble-control-msgs
+
+  4) TELEOP + INPUT
+apt install -y \
+  ros-humble-twist-mux \
+  ros-humble-joy-teleop
+
+  5) BUILD ROS GZ ROS2 CONTROL (DA SORGENTE, NON APT)
+cd /tibidabot/src
+
+git clone -b humble https://github.com/ros-controls/gz_ros2_control.git
+
+6) BUILD WORKSPACE
+cd /tibidabot
+colcon build --symlink-install
+source install/setup.bash

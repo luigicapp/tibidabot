@@ -7,9 +7,35 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
+
+include_directories(include)
+
+add_executable(mapping_with_known_poses src/mapping_with_known_poses.cpp)
+ament_target_dependencies(mapping_with_known_poses
+  rclcpp
+  nav_msgs
+  tf2_ros
+  geometry_msgs
+  sensor_msgs
+)
+
+install(DIRECTORY include
+  DESTINATION include
+)
+
+install(TARGETS
+  mapping_with_known_poses
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 install(
   DIRECTORY maps
