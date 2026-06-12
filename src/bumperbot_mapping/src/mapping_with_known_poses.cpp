@@ -79,11 +79,55 @@ namespace bumperbot_mapping
         if (!poseOnMap(robot_pose, map_.info))
         {
             RCLCPP_ERROR(get_logger(), "robot pose is out of the map bounds, cannot update the map");
+            return;
         }
         
-        unsigned int robot_cell = poseToCell(robot_pose, map_.info); //convert the robot's pose to a cell index (not used in this example, but can be useful for future extensions)
-        map_.data[robot_cell] = 100; //mark the robot's cell as occupied (for visualization purposes, we can mark the robot's cell as occupied, but in a real mapping application, we may want to keep it as free or unknown)
-        
+        //needed in order to express laser scan in cartesian coordinates in the map frame, because the laser scan is in polar coordinates in the "base_link" frame, we need to convert it to cartesian coordinates in the "odom" frame using the robot's pose and the transform's rotation
+        tf2::Quaternion q(t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z, t.transform.rotation.w); //convert the transform's rotation from a quaternion to a tf2::Quaternion
+        tf2::Matrix3x3 m(q); //convert the quaternion to a rotation matrix
+        double roll, pitch, yaw; //variables to store the roll, pitch, and yaw (we just need yaw for 2D mapping, but we can also get roll and pitch if needed for future extensions)
+        m.getRPY(roll, pitch, yaw); //get the roll, pitch, and yaw from the rotation matrix
+
+        for(size_t i = 0; i < scan->ranges.size(); ++i) //iterate through each scan point in the laser scan
+        {
+            //to draw obstacles
+            double angle = scan->angle_min + (i * scan->angle_increment) + yaw; //calculate the angle of the current scan point in the "base_link" frame (in radians)
+            double px = scan->ranges[i] * std::cos(angle); //calculate the x coordinate of the scan point in the map frame (in meters)
+            double py = scan->ranges[i] * std::sin(angle); //calculate the y coordinate of the scan point in the map frame (in meters)
+            px += t.transform.translation.x; //adjust the x coordinate of the scan point by the robot's x position in the map frame (in meters)
+            py += t.transform.translation.y; //adjust the y coordinate of the scan point by the robot's y position in the map frame (in meters)
+            
+            Pose beam_pose = coordinateToPose(px, py, map_.info); //calculate the pose of the scan point in the map frame (in cells)
+            
+            if (!poseOnMap(beam_pose, map_.info) )
+            {
+                continue;
+            }
+            unsigned int beam_cell = poseToCell(beam_pose, map_.info); //convert the scan point's pose to a cell index
+            map_.data[beam_cell] = 100; //mark the cell of the scan
+        }
+                    
+            /*float min_range = scan->range_min; //get the minimum range of the scan
+            float dx = range * std::cos(tf2::getYaw(t.transform.rotation)); //calculate the x component of the scan point in the map frame
+            float dy = range * std::sin(tf2::getYaw(t.transform.rotation)); //calculate the y component of the scan point in the map frame
+            float distance = std::sqrt(dx * dx + dy * dy); //calculate the distance from the robot to the scan point
+            while(distance > min_range) //we will mark the cells along the ray from the robot to the scan point as free until we reach the scan point or the minimum range
+            {
+                Pose freePose = coordinateToPose(robot_pose.x + dx * (distance - min_range) / distance, 
+                                                robot_pose.y + dy * (distance - min_range) / distance, 
+                                                map_.info); //calculate the pose of the free cell along the ray (in cells)
+
+                if (poseOnMap(freePose, map_.info))
+                {
+                    unsigned int free_cell = poseToCell(freePose, map_.info); //convert the free cell's pose to a cell index
+                    if (map_.data[free_cell] != 100) //only mark the cell as free if it is not already marked as occupied by another scan point
+                    {
+                        map_.data[free_cell] = 0; //mark the cell as free (because we know that there is no obstacle at that cell)
+                    }
+                }
+
+                distance -= min_range; //move closer to the robot by the minimum range for the next iteration
+            }*/
         }
 
         void MappingWithKnownPoses::timerCallback()
