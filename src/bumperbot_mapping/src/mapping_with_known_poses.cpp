@@ -85,21 +85,33 @@ std::vector<Pose> bresenham(const Pose & start, const Pose & end)
     return line;
 }
 
-    std::vector<std::pair<Pose, unsigned int>>inverseSensorModel(const Pose & p_robot, const Pose & p_beam)
+    std::vector<std::pair<Pose, double>>inverseSensorModel(const Pose & p_robot, const Pose & p_beam)
     {
-        std::vector<std::pair<Pose, unsigned int>> occ_values; //vector of pairs of poses and their corresponding occupancy values (0 for free, 100 for occupied)
+        std::vector<std::pair<Pose, double>> occ_values; //vector of pairs of poses and their corresponding occupancy values (0 for free, 100 for occupied)
         std::vector<Pose> line = bresenham(p_robot, p_beam); //get the cells that are traversed by the beam from start to end using Bresenham's algorithm
         occ_values.reserve(line.size());
 
         for(size_t i = 0; i < line.size() - 1; ++i) //exclude the end cell because it is occupied
         {
-            occ_values.emplace_back(line.at(i), 0); //the traversed cells are free
+            occ_values.emplace_back(line.at(i), FREE_PROB); //the traversed cells are free
         }
 
-        occ_values.emplace_back(line.back(), 100); //the end cell is occupied
+        occ_values.emplace_back(line.back(), OCC_PROB); //the end cell is occupied
         
         return occ_values;
     }
+
+    
+    double prob2logodds(const double prob)
+    {
+        return std::log(prob / (1.0 - prob)); //convert a probability to log odds
+    }
+    
+    double logodds2prob(const double logodds)
+    {
+        return 1.0 - (1.0 / (1.0 + std::exp(logodds))); //convert log odds to a probability
+    }
+
 
     void MappingWithKnownPoses::publishMap(nav_msgs::msg::OccupancyGrid & map_)
     {
@@ -124,6 +136,8 @@ std::vector<Pose> bresenham(const Pose & start, const Pose & end)
         map_.header.frame_id = "odom"; //set the frame id of the map to be "odom"
         map_.data = std::vector<int8_t>(map_.info.width * map_.info.height, -1); //initialize the map data with -1 (unknown). It is a vector of int8, where each cell can be -1 (unknown), 0 (free), or 100 (occupied)
     
+        probability_map = std::vector<double>(map_.info.width * map_.info.height, prob2logodds(PRIOR_PROB)); //initialize the probability map with the prior probability of a cell being occupied (0.5 means unknown)
+
         map_publisher_ = create_publisher<nav_msgs::msg::OccupancyGrid>("map", 1); //create a publisher for the map
         ray_array_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("ray_markers", 10);
         
@@ -139,6 +153,7 @@ std::vector<Pose> bresenham(const Pose & start, const Pose & end)
 {
     visualization_msgs::msg::MarkerArray marker_array;
 
+    RCLCPP_INFO(get_logger(), "Received a laser scan with %zu ranges", scan.ranges.size());
 
     visualization_msgs::msg::Marker delete_marker;
     delete_marker.action = visualization_msgs::msg::Marker::DELETEALL;
@@ -216,14 +231,14 @@ std::vector<Pose> bresenham(const Pose & start, const Pose & end)
             continue;
         }
 
-        std::vector<std::pair<Pose, unsigned int>> occ_cells = inverseSensorModel(robot_pose, beam_pose);
+        std::vector<std::pair<Pose, double>> occ_cells = inverseSensorModel(robot_pose, beam_pose);
         for (const auto & cell : occ_cells)
         {            
             if(poseOnMap(cell.first, map_.info))
             {
                 //aggiorna la mappa con i valori di occupazione (0 per libero, 100 per occupato)
                 unsigned int cell_index = poseToCell(cell.first, map_.info);
-                map_.data.at(cell_index) = cell.second; //aggiorna la mappa con i valori di occupazione (0 per libero, 100 per occupato)
+                probability_map.at(cell_index) += prob2logodds(cell.second) - prob2logodds(PRIOR_PROB); 
             }
         }
         
@@ -261,11 +276,13 @@ std::vector<Pose> bresenham(const Pose & start, const Pose & end)
     ray_array_publisher_->publish(marker_array);
 }
 
-        void MappingWithKnownPoses::timerCallback()
-        {
-            map_.header.stamp = get_clock()->now(); //update the timestamp of the map
-            publishMap(map_); //publish the map regularly (every 1 second)
-        }
+void MappingWithKnownPoses::timerCallback()
+{
+    map_.header.stamp = get_clock()->now(); //update the timestamp of the map
+    std::transform(probability_map.begin(), probability_map.end(), map_.data.begin(), 
+                   [](double logodds) { return static_cast<int8_t>(std::round(logodds2prob(logodds) * 100)); }); //convert the probability map (in log odds) to the occupancy grid format (0 for free, 100 for occupied, -1 for unknown)
+    publishMap(map_); //publish the map regularly (every 1 second)
+}
 }
 
 

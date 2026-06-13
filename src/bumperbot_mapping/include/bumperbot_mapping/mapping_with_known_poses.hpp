@@ -13,6 +13,9 @@
 
 namespace bumperbot_mapping
 {
+    inline const double PRIOR_PROB = 0.5; //prior probability of a cell being occupied (0.5 means unknown)
+    inline const double OCC_PROB = 0.9; //probability of a cell
+    inline const double FREE_PROB = 0.35; //probability of a cell being free
     struct Pose
     {
         Pose() = default;  //we can give constructors to a struct as well
@@ -28,15 +31,24 @@ namespace bumperbot_mapping
 
     std::vector<Pose> bresenham(const Pose & start, const Pose & end);
 
-    std::vector<std::pair<Pose, unsigned int>>inverseSensorModel(const Pose & p_robot, const Pose & p_beam); //return a vector of poses that are the cells that are traversed by the beam from start to end, excluding the end cell (the end cell is occupied, the traversed cells are free)
+    std::vector<std::pair<Pose, double>>inverseSensorModel(const Pose & p_robot, const Pose & p_beam); //return a vector of poses that are the cells that are traversed by the beam from start to end, excluding the end cell (the end cell is occupied, the traversed cells are free)
+
+    double prob2logodds(const double prob); //convert a probability to log odds
+    double logodds2prob(const double logodds); //convert log odds to probability
+
     class MappingWithKnownPoses : public rclcpp::Node
     {
-    public:
+   
+   
+        public:
 
         MappingWithKnownPoses(const std::string &node_name);
         void publishMap(nav_msgs::msg::OccupancyGrid &map);
-    private:
+   
+   
+        private:
 
+        std::vector<double> probability_map;
         void scanCallback(const sensor_msgs::msg::LaserScan & scan);
         void timerCallback(); //will publish regularly the map
 
