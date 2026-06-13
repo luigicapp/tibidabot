@@ -4,11 +4,14 @@
 #include <geometry_msgs/msg/point.hpp> //for geometry_msgs::msg::Point to represent the start and end points of the ray
 #include <visualization_msgs/msg/marker.hpp> //for visualization_msgs::msg::Marker to visualize the robot's pose and the scan points in RViz
 #include <visualization_msgs/msg/marker_array.hpp> //for visualization_msgs::msg::MarkerArray to visualize the rays in RViz
+
 using std::placeholders::_1;
 
 namespace bumperbot_mapping
 {
-    //utility function to convert a pose to a cell index. Need to divide the pose by the resolution of the map to get the cell index, and also adjust for the origin of the map.
+    //utility function to convert a pose to a cell index. 
+    //Need to divide the pose by the resolution of the map to get the cell index, 
+    //and also adjust for the origin of the map.
     Pose coordinateToPose(const double x, const double y, const nav_msgs::msg::MapMetaData &map_info)
     {
         Pose pose;
@@ -17,6 +20,7 @@ namespace bumperbot_mapping
         return pose;
     }
 
+    //utility function to check if a pose is within the bounds of the map.
     bool poseOnMap(const Pose &pose, const nav_msgs::msg::MapMetaData &map_info)
     {
         return (pose.x >= 0 && pose.x < static_cast<int>(map_info.width) && 
@@ -28,6 +32,75 @@ namespace bumperbot_mapping
         return pose.y * map_info.width + pose.x; //convert the pose to a cell index (row-major order)
     }
     
+    
+std::vector<Pose> bresenham(const Pose & start, const Pose & end)
+{
+    // Implementation of Bresenham's line drawing algorithm
+    // See en.wikipedia.org/wiki/Bresenham's_line_algorithm
+    std::vector<Pose> line;
+
+    int dx = end.x - start.x;
+    int dy = end.y - start.y;
+
+    int xsign = dx > 0 ? 1 : -1;
+    int ysign = dy > 0 ? 1 : -1;
+
+    dx = std::abs(dx);
+    dy = std::abs(dy);
+
+    int xx, xy, yx, yy;
+    if(dx > dy)
+    {
+        xx = xsign;
+        xy = 0;
+        yx = 0;
+        yy = ysign;
+    }
+    else
+    {
+        int tmp = dx;
+        dx = dy;
+        dy = tmp;
+        xx = 0;
+        xy = ysign;
+        yx = xsign;
+        yy = 0;
+    }
+
+    int D = 2 * dy - dx;
+    int y = 0;
+
+    line.reserve(dx + 1);
+    for (int i = 0; i < dx + 1; i++)
+    {
+        line.emplace_back(Pose(start.x + i * xx + y * yx, start.y + i * xy + y * yy));
+        if(D >= 0)
+        {
+            y++;
+            D -= 2 * dx;
+        }
+        D += 2 * dy;
+    }
+
+    return line;
+}
+
+    std::vector<std::pair<Pose, unsigned int>>inverseSensorModel(const Pose & p_robot, const Pose & p_beam)
+    {
+        std::vector<std::pair<Pose, unsigned int>> occ_values; //vector of pairs of poses and their corresponding occupancy values (0 for free, 100 for occupied)
+        std::vector<Pose> line = bresenham(p_robot, p_beam); //get the cells that are traversed by the beam from start to end using Bresenham's algorithm
+        occ_values.reserve(line.size());
+
+        for(size_t i = 0; i < line.size() - 1; ++i) //exclude the end cell because it is occupied
+        {
+            occ_values.emplace_back(line.at(i), 0); //the traversed cells are free
+        }
+
+        occ_values.emplace_back(line.back(), 100); //the end cell is occupied
+        
+        return occ_values;
+    }
+
     void MappingWithKnownPoses::publishMap(nav_msgs::msg::OccupancyGrid & map_)
     {
         map_.header.stamp = get_clock()->now(); //update the timestamp of the map   
@@ -143,9 +216,17 @@ namespace bumperbot_mapping
             continue;
         }
 
-        unsigned int beam_cell = poseToCell(beam_pose, map_.info);
-        map_.data.at(beam_cell) = 100;
-
+        std::vector<std::pair<Pose, unsigned int>> occ_cells = inverseSensorModel(robot_pose, beam_pose);
+        for (const auto & cell : occ_cells)
+        {            
+            if(poseOnMap(cell.first, map_.info))
+            {
+                //aggiorna la mappa con i valori di occupazione (0 per libero, 100 per occupato)
+                unsigned int cell_index = poseToCell(cell.first, map_.info);
+                map_.data.at(cell_index) = cell.second; //aggiorna la mappa con i valori di occupazione (0 per libero, 100 per occupato)
+            }
+        }
+        
         // marker per visualizzare il raggio in RViz
         visualization_msgs::msg::Marker ray;
         ray.header.frame_id = map_.header.frame_id;

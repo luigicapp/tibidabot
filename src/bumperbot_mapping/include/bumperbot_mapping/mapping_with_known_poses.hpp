@@ -25,7 +25,10 @@ namespace bumperbot_mapping
     unsigned int poseToCell(const Pose &pose, const nav_msgs::msg::MapMetaData &map_info); //map_info contains the resolution and the origin of the map, which are needed to convert from pose to cell index (return unsiged int because the cell index is always positive and is a vector index)
     Pose coordinateToPose(const double x, const double y, const nav_msgs::msg::MapMetaData &map_info); //map_info contains the resolution and the origin of the map, which are needed to convert from coordinate to pose
     bool poseOnMap(const Pose &pose, const nav_msgs::msg::MapMetaData &map_info); //check if the pose is on the map or not
-    
+
+    std::vector<Pose> bresenham(const Pose & start, const Pose & end);
+
+    std::vector<std::pair<Pose, unsigned int>>inverseSensorModel(const Pose & p_robot, const Pose & p_beam); //return a vector of poses that are the cells that are traversed by the beam from start to end, excluding the end cell (the end cell is occupied, the traversed cells are free)
     class MappingWithKnownPoses : public rclcpp::Node
     {
     public:
