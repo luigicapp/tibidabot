@@ -4,8 +4,12 @@
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp> //for visualization_msgs::msg::MarkerArray to visualize the rays in RViz
 #include <tf2_ros/transform_listener.h> //in order to listen to the tf2 transforms
 #include <tf2_ros/buffer.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
 
 namespace bumperbot_mapping
 {
@@ -27,15 +31,18 @@ namespace bumperbot_mapping
     public:
 
         MappingWithKnownPoses(const std::string &node_name);
-        void publishMap(const nav_msgs::msg::OccupancyGrid &map);
+        void publishMap(nav_msgs::msg::OccupancyGrid &map);
     private:
 
-        void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
+        void scanCallback(const sensor_msgs::msg::LaserScan & scan);
         void timerCallback(); //will publish regularly the map
 
         nav_msgs::msg::OccupancyGrid map_;
+        visualization_msgs::msg::Marker ray_marker; //create a marker to represent the ray from
+
         rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_sub_;
         rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr map_publisher_;
+        rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr ray_array_publisher_; //publisher for the rays to visualize in RViz2
 
         rclcpp::TimerBase::SharedPtr timer_; //will call the timerCallback 
 
