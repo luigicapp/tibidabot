@@ -153,7 +153,6 @@ std::vector<Pose> bresenham(const Pose & start, const Pose & end)
 {
     visualization_msgs::msg::MarkerArray marker_array;
 
-    RCLCPP_INFO(get_logger(), "Received a laser scan with %zu ranges", scan.ranges.size());
 
     visualization_msgs::msg::Marker delete_marker;
     delete_marker.action = visualization_msgs::msg::Marker::DELETEALL;
